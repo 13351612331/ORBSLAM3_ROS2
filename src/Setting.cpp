@@ -68,6 +68,8 @@ int Setting::readParameter<int>(cv::FileStorage &fSettings,
       exit(-1);
     } else {
       std::cerr << name << "optional parameter does not exist..." << std::endl;
+      found = false;
+      return 0;
     }
   } else if (!node.isInt()) {
     std::cerr << name << " parameter must be an integer number , aborting..."
@@ -102,6 +104,21 @@ Setting::Setting(const std::string &configFile, ORB_SLAM3::eSensor sensor)
 
   // Read image info
   readImageInfo(fSettings);
+  std::cout << "\t-Loaded image info" << std::endl;
+
+  if (m_sensor == eSensor::IMU_MONOCULAR || m_sensor == eSensor::IMU_STEREO ||
+      m_sensor == eSensor::IMU_RGBD) {
+    std::cout << "\t-Loaded IMU calibration" << std::endl;
+  }
+
+  if (m_sensor == eSensor::RGBD || m_sensor == eSensor::IMU_RGBD) {
+    std::cout << "\t-Loaded RGB-D calibration" << std::endl;
+  }
+
+  readORB(fSettings);
+  std::cout << "\t-Loaded ORB settings" << std::endl;
+  readViewer(fSettings);
+  std::cout << "\t-Loaded viewer settings" << std::endl;
 }
 
 void Setting::readCamera1(cv::FileStorage &fSettings) {
@@ -169,7 +186,56 @@ void Setting::readImageInfo(cv::FileStorage &fSettings) {
   // 读取原始图像和所需图像尺寸
   int originalRows = readParameter<int>(fSettings, "Camera.height", found);
   int originalCols = readParameter<int>(fSettings, "Camera.width", found);
-  std::cout << originalRows << " " << originalCols << std::endl;
+  originalImSize_.width = originalCols;
+  originalImSize_.height = originalRows;
+
+  newImSize_ = originalImSize_;
+  int newHeight =
+      readParameter<int>(fSettings, "Camera.newHeight", found, false);
+  if (found) {
+    std::cout << "newHeight found..." << std::endl;
+  }
+
+  int newWidth = readParameter<int>(fSettings, "Camera.newWidth", found, false);
+  if (found) {
+    std::cout << "newWidth found..." << std::endl;
+  }
+  fps_ = readParameter<int>(fSettings, "Camera.fps", found);
+  bRGB_ = readParameter<int>(fSettings, "Camera.RGB", found);
+}
+
+void Setting::readORB(cv::FileStorage &fSettings) {
+  bool found;
+
+  nFeatures_ = readParameter<int>(fSettings, "ORBextractor.nFeatures", found);
+  scaleFactor_ =
+      readParameter<float>(fSettings, "ORBextractor.scaleFactor", found);
+  nLevels_ = readParameter<int>(fSettings, "ORBextractor.nLevels", found);
+  initThFAST = readParameter<int>(fSettings, "ORBextractor.iniThFAST", found);
+  minThFAST_ = readParameter<int>(fSettings, "ORBextractor.minThFAST", found);
+}
+
+void Setting::readViewer(cv::FileStorage &fSettings) {
+  bool found;
+  keyFrameSize_ = readParameter<float>(fSettings, "Viewer.KeyFrameSize", found);
+  keyFrameLineWidth_ =
+      readParameter<float>(fSettings, "Viewer.KeyFrameLineWidth", found);
+  graphLineWidth_ =
+      readParameter<float>(fSettings, "Viewer.GraphLineWidth", found);
+  pointSize_ = readParameter<float>(fSettings, "Viewer.PointSize", found);
+  cameraSize_ = readParameter<float>(fSettings, "Viewer.CameraSize", found);
+  cameraLineWidth_ =
+      readParameter<float>(fSettings, "Viewer.CameraLineWidth", found);
+  viewPointX_ = readParameter<float>(fSettings, "Viewer.ViewpointX", found);
+  viewPointY_ = readParameter<float>(fSettings, "Viewer.ViewpointY", found);
+  viewPointZ_ = readParameter<float>(fSettings, "Viewer.ViewpointZ", found);
+  viewPointF_ = readParameter<float>(fSettings, "Viewer.ViewpointF", found);
+  imageViewerScale_ =
+      readParameter<float>(fSettings, "Viewer.imageViewerScale", found, false);
+
+  if (!found) {
+    imageViewerScale_ = 1.0f;
+  }
 }
 
 } // namespace ORB_SLAM3

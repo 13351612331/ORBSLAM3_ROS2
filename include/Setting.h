@@ -31,6 +31,10 @@ private:
 
   void readImageInfo(cv::FileStorage &fSettings);
 
+  void readORB(cv::FileStorage &fSettings);
+
+  void readViewer(cv::FileStorage &fSettings);
+
 private:
   template <typename T>
   T readParameter(cv::FileStorage &fSettings, const std::string &name,
@@ -40,14 +44,41 @@ private:
   eSensor m_sensor;
   CameraType m_cameraType;
 
+  /**
+   * Visual stuff
+   */
   std::unique_ptr<GeometricCamera> calibration1_, calibration2_;
   // GeometricCamera *calibration1_, *calibration2_;
   // GeometricCamera *originalCalib1_, *originalCalib2_;
   std::unique_ptr<GeometricCamera> originalCalib1_, originalCalib2_;
   std::vector<float> vPinHoleDistorsion1_, vPinHoleDistorsion2_;
 
+  cv::Size originalImSize_, newImSize_;
+  float fps_;
+  bool bRGB_;
+
   // 表示是否需要对图像进行失真校正的标志位
   bool bNeedToUndistort_;
+
+  /**
+   * ORB stuff
+   */
+  int nFeatures_;
+  float scaleFactor_;
+  int nLevels_;
+  int initThFAST, minThFAST_;
+
+  /**
+   * Viewer stuff
+   */
+   float keyFrameSize_;
+   float keyFrameLineWidth_;
+   float graphLineWidth_;
+   float pointSize_;
+   float cameraSize_;
+   float cameraLineWidth_;
+   float viewPointX_ , viewPointY_ , viewPointZ_ , viewPointF_;
+   float imageViewerScale_;
 };
 } // namespace ORB_SLAM3
 
