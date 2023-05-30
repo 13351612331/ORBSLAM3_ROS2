@@ -54,6 +54,54 @@ System::System(const std::string &strVocFile,
   cv::FileNode node = fsSettings["File.version"];
   if (!node.empty() && node.isString() && node.string() == "1.0") {
     settings_ = std::make_unique<Setting>(strSettingsFile, mSensor);
+    mStrLoadAtlasFromFile = settings_->atlasLoadFile();
+    mStrSaveAtlasToFile = settings_->atlasSaveFile();
+
+    std::cout << (settings_.get()) << std::endl;
+  } else {
+    // TODO
+  }
+
+  node = fsSettings["loopClosing"];
+  bool activeLC = true; // 激活回环检测（Loop Closing）
+  if (!node.empty()) {
+    activeLC = static_cast<int>(fsSettings["loopClosing"]) != 0;
+  }
+
+  mStrVocabularyFilePath = strVocFile;
+
+  bool loadedAtlas = false;
+
+  if (mStrLoadAtlasFromFile.empty()) {
+    // Load ORB Vocabulary
+    std::cout << std::endl
+              << "Loading ORB Vocabulary. This could take a while..."
+              << std::endl;
+
+    mpVocabulary = new ORBVocabulary();
+    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    if (!bVocLoad) {
+      std::cerr << "Wrong path to vocabulary. " << std::endl;
+      std::cerr << "Failed to open at: " << strVocFile << std::endl;
+      exit(-1);
+    }
+    std::cout << "Vocabulary loaded!" << std::endl << std::endl;
+
+    // Create KeyFrame Database
+    mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
+
+    // Create the Atlas
+    std::cout << "Initialization of Atlas from scratch " << std::endl;
+    mpAtlas = new Atlas(0);
+  } else {
+    // TODO
+    std::cout << "mStrLoadAtlasFromFile is not empty TODO" << std::endl;
+  }
+
+  if (mSensor == eSensor::IMU_STEREO || mSensor == eSensor::IMU_MONOCULAR ||
+      mSensor == eSensor::IMU_RGBD) {
+    // TODO
+    std::cerr << "Not yet implemented！！！" << std::endl;
   }
 }
 

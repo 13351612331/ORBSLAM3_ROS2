@@ -26,6 +26,9 @@ public:
   Setting(const Setting &) = delete;
   Setting &operator=(const Setting &) = delete;
 
+  std::string atlasLoadFile() { return sLoadFrom_; };
+  std::string atlasSaveFile() { return sSaveto_; };
+
 private:
   void readCamera1(cv::FileStorage &fSettings);
 
@@ -34,6 +37,8 @@ private:
   void readORB(cv::FileStorage &fSettings);
 
   void readViewer(cv::FileStorage &fSettings);
+
+  void readLoadAndSave(cv::FileStorage &fSettings);
 
 private:
   template <typename T>
@@ -70,15 +75,23 @@ private:
 
   /**
    * Viewer stuff
+   * 用于定义地图可视化效果的一些参数
    */
-   float keyFrameSize_;
-   float keyFrameLineWidth_;
-   float graphLineWidth_;
-   float pointSize_;
-   float cameraSize_;
-   float cameraLineWidth_;
-   float viewPointX_ , viewPointY_ , viewPointZ_ , viewPointF_;
-   float imageViewerScale_;
+  float keyFrameSize_;      // 地图中关键帧的大小
+  float keyFrameLineWidth_; // 地图中关键帧边框线的宽度
+  float graphLineWidth_;    // 地图中相机运动路径边线的宽度
+  float pointSize_;         // 地图中点云的大小
+  float cameraSize_;        // 地图中相机模型的大小
+  float cameraLineWidth_;   // 地图中相机模型边框线的宽度
+  float viewPointX_, viewPointY_,
+      viewPointZ_; // 地图可视化的观察者（或称“查看器”）在三维空间中的位置
+  float viewPointF_;       // 地图可视化的观察者的视场角
+  float imageViewerScale_; // 地图可视化中图像浏览器的缩放比例。
+
+  /**
+   * save and load maps
+   */
+  std::string sLoadFrom_, sSaveto_;
 };
 } // namespace ORB_SLAM3
 

@@ -119,6 +119,10 @@ Setting::Setting(const std::string &configFile, ORB_SLAM3::eSensor sensor)
   std::cout << "\t-Loaded ORB settings" << std::endl;
   readViewer(fSettings);
   std::cout << "\t-Loaded viewer settings" << std::endl;
+  readLoadAndSave(fSettings);
+  std::cout << "\t-Loaded Atlas settings" << std::endl;
+
+  std::cout << "-------------------------" << std::endl;
 }
 
 void Setting::readCamera1(cv::FileStorage &fSettings) {
@@ -236,6 +240,15 @@ void Setting::readViewer(cv::FileStorage &fSettings) {
   if (!found) {
     imageViewerScale_ = 1.0f;
   }
+}
+
+void Setting::readLoadAndSave(cv::FileStorage &fSettings) {
+  bool found;
+
+  sLoadFrom_ = readParameter<std::string>(fSettings, "System.LoadAtlasFromFile",
+                                          found, false);
+  sSaveto_ = readParameter<std::string>(fSettings, "System.SaveAtlasToFile",
+                                        found, false);
 }
 
 } // namespace ORB_SLAM3

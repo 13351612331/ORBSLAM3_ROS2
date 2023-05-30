@@ -9,6 +9,9 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>
 
+#include "Atlas.h"
+#include "KeyFrameDatabase.h"
+#include "ORBVocabulary.h"
 #include "ParamEnum.h"
 #include "Setting.h"
 
@@ -37,6 +40,23 @@ public:
 
 private:
   eSensor mSensor; // Input sensor
+
+  // ORB vocabulary used for place recognition and feature matching
+  ORBVocabulary *mpVocabulary;
+
+  // KeyFrame database for place recognition (relocalization and loop detection)
+  KeyFrameDatabase *mpKeyFrameDatabase;
+
+  // Map structure that stores the pointers to all KeyFrames and MapPoints
+  // Map* mpMap
+  Atlas *mpAtlas;
+
+  //
+  std::string mStrLoadAtlasFromFile;
+  std::string mStrSaveAtlasToFile;
+
+  std::string mStrVocabularyFilePath;
+
   std::unique_ptr<Setting> settings_;
 };
 } // namespace ORB_SLAM3
