@@ -29,6 +29,8 @@ public:
   std::string atlasLoadFile() { return sLoadFrom_; };
   std::string atlasSaveFile() { return sSaveto_; };
 
+  float thFarPoints() {return thFarPoints_;}
+
 private:
   void readCamera1(cv::FileStorage &fSettings);
 
@@ -39,6 +41,8 @@ private:
   void readViewer(cv::FileStorage &fSettings);
 
   void readLoadAndSave(cv::FileStorage &fSettings);
+
+  void readOtherParameters(cv::FileStorage &fSettings);
 
 private:
   template <typename T>
@@ -92,6 +96,14 @@ private:
    * save and load maps
    */
   std::string sLoadFrom_, sSaveto_;
+
+  /**
+   * Other stuff
+   * 用于控制最近邻搜索的阈值。该参数用于滤除一些离群点，以提高跟踪的精度
+   * 如果当前帧的某个特征点和上一帧的某个地图点的重投影误差超过了
+   * thFarPoints_，则认为这个匹配是错误的，将其排除
+   */
+  float thFarPoints_;
 };
 } // namespace ORB_SLAM3
 

@@ -121,6 +121,8 @@ Setting::Setting(const std::string &configFile, ORB_SLAM3::eSensor sensor)
   std::cout << "\t-Loaded viewer settings" << std::endl;
   readLoadAndSave(fSettings);
   std::cout << "\t-Loaded Atlas settings" << std::endl;
+  readOtherParameters(fSettings);
+  std::cout << "\t-Loaded misc parameters" << std::endl;
 
   std::cout << "-------------------------" << std::endl;
 }
@@ -249,6 +251,13 @@ void Setting::readLoadAndSave(cv::FileStorage &fSettings) {
                                           found, false);
   sSaveto_ = readParameter<std::string>(fSettings, "System.SaveAtlasToFile",
                                         found, false);
+}
+
+void Setting::readOtherParameters(cv::FileStorage &fSettings) {
+  bool found;
+
+  thFarPoints_ =
+      readParameter<float>(fSettings, "System.thFarPoints", found, false);
 }
 
 } // namespace ORB_SLAM3

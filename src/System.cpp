@@ -103,6 +103,34 @@ System::System(const std::string &strVocFile,
     // TODO
     std::cerr << "Not yet implemented！！！" << std::endl;
   }
+
+  // Create Drawers. These are used by the Viewer
+  mpFrameDrawer = new FrameDrawer(mpAtlas);
+  mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_.get());
+
+  // Initialize the Tracking thread
+  // (it will live in the main thread of execution, the one that called this
+  // constructor)
+  std::cout << "Seq. Name: " << strSequence
+            << std::endl; // strSequence输入的图像序列文件名前缀
+  mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+                           mpAtlas, mpKeyFrameDatabase, strSettingsFile,
+                           mSensor, settings_.get(), strSequence);
+
+  // Initialize the local Mapping thread and launch
+  mpLocalMapper = new LocalMapping(
+      this, mpAtlas,
+      mSensor == eSensor::MONOCULAR || mSensor == eSensor::IMU_MONOCULAR,
+      mSensor == eSensor::IMU_MONOCULAR || mSensor == eSensor::IMU_STEREO ||
+          mSensor == eSensor::IMU_RGBD,
+      strSequence);
+  mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run, mpLocalMapper);
+  mpLocalMapper->mInitFr = initFr;
+  if (settings_) {
+    mpLocalMapper->mThFarPoints = settings_->thFarPoints();
+  } else {
+    mpLocalMapper->mThFarPoints = fsSettings["thFarPoints"];
+  }
 }
 
 } // namespace ORB_SLAM3

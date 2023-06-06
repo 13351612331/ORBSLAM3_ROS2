@@ -7,6 +7,7 @@ if (NOT OpenCV_FOUND)
 endif ()
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
+MESSAGE(${OpenCV_INCLUDE_DIRS})
 
 include_directories(include
         Thirdparty
