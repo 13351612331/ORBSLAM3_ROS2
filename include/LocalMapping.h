@@ -30,6 +30,7 @@ public:
 
   // not consider far points(clouds)
   float mThFarPoints;
+  bool mbFarPoints;
 
 protected:
   System *mpSystem;

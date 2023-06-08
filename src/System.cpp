@@ -131,6 +131,19 @@ System::System(const std::string &strVocFile,
   } else {
     mpLocalMapper->mThFarPoints = fsSettings["thFarPoints"];
   }
+
+  if (mpLocalMapper->mThFarPoints != 0) {
+    std::cout << "Discard points further than " << mpLocalMapper->mThFarPoints
+              << " m from current camera" << std::endl;
+    mpLocalMapper->mbFarPoints = true;
+  } else {
+    mpLocalMapper->mbFarPoints = false;
+  }
+
+  // Initialize the loop closing thread and launch
+  mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary,
+                                 mSensor != eSensor::MONOCULAR, activeLC);
+  mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 }
 
 } // namespace ORB_SLAM3

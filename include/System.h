@@ -14,6 +14,7 @@
 #include "FrameDrawer.h"
 #include "KeyFrameDatabase.h"
 #include "LocalMapping.h"
+#include "LoopClosing.h"
 #include "MapDrawer.h"
 #include "ORBVocabulary.h"
 #include "ParamEnum.h"
@@ -67,6 +68,11 @@ private:
   // adjustment.
   LocalMapping *mpLocalMapper;
 
+  // Loop Closer. It searches loops with every new keyframe. If there is a loop
+  // it performs a pose graph optimization and full bundle adjustment (in a new
+  // thread) afterwards.
+  LoopClosing *mpLoopCloser;
+
   // 绘制当前帧和匹配地图点的可视化信息，将这些信息显示在屏幕上
   FrameDrawer *mpFrameDrawer;
 
@@ -76,6 +82,7 @@ private:
   // The Tracking thread "lives" in the main execution thread that creates the
   // System object
   std::thread *mptLocalMapping;
+  std::thread *mptLoopClosing;
 
   //
   std::string mStrLoadAtlasFromFile;
