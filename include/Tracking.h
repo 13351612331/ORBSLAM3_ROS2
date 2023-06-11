@@ -12,10 +12,14 @@
 #include "ORBVocabulary.h"
 #include "ParamEnum.h"
 #include "System.h"
+#include "Viewer.h"
 #include <eigen3/Eigen/Core>
 
 namespace ORB_SLAM3 {
 class System;
+class LocalMapping;
+class LoopClosing;
+class Viewer;
 class Tracking {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -24,6 +28,17 @@ public:
            const std::string &strSettingPath, const eSensor sensor,
            Setting *settings, const std::string &_nameSeq = std::string());
   ~Tracking();
+
+  void SetLocalMapper(LocalMapping *pLocalMapper);
+  void SetLoopClosing(LoopClosing *pLoopClosing);
+  void SetViewer(Viewer *pViewer);
+
+protected:
+  LocalMapping *mpLocalMapper;
+  LoopClosing *mpLoopClosing;
+
+  // Drawers
+  Viewer* mpViewer;
 };
 } // namespace ORB_SLAM3
 

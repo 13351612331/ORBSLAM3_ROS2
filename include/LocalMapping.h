@@ -6,10 +6,13 @@
 #define ORB_SLAM3_LOCALMAPPING_H
 #include "Atlas.h"
 #include "System.h"
+#include "Tracking.h"
 #include <eigen3/Eigen/Core>
 namespace ORB_SLAM3 {
 class System;
 class Atlas;
+class Tracking;
+class LoopClosing;
 
 class LocalMapping {
 public:
@@ -17,6 +20,8 @@ public:
   LocalMapping(System *pSys, Atlas *pAtlas, const float bMonocular,
                bool bInertial, const string &_strSeqName = std::string());
 
+  void SetTracker(Tracking *pTracker);
+  void SetLoopCloser(LoopClosing *pLoopCloser);
   // Main function
   void Run();
 
@@ -35,6 +40,9 @@ public:
 protected:
   System *mpSystem;
   Atlas *mpAtlas;
+
+  LoopClosing *mpLoopCloser;
+  Tracking *mpTracker;
 
   bool mbMonocular;
   bool mbInertial;

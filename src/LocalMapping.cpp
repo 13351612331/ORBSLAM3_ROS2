@@ -19,6 +19,14 @@ LocalMapping::LocalMapping(ORB_SLAM3::System *pSys, ORB_SLAM3::Atlas *pAtlas,
   mNumKFCulling = 0;
 }
 
+void LocalMapping::SetLoopCloser(ORB_SLAM3::LoopClosing *pLoopCloser) {
+  mpLoopCloser = pLoopCloser;
+}
+
+void LocalMapping::SetTracker(ORB_SLAM3::Tracking *pTracker) {
+  mpTracker = pTracker;
+}
+
 void LocalMapping::Run() {
   std::cout << "Local Mapping is running" << std::endl;
 }

@@ -7,21 +7,36 @@
 
 #include "Atlas.h"
 #include "KeyFrameDatabase.h"
+#include "LocalMapping.h"
 #include "ORBVocabulary.h"
+#include "Viewer.h"
 
 namespace ORB_SLAM3 {
+class Tracking;
+class LocalMapping;
+class Viewer;
+
 class LoopClosing {
 public:
   LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc,
               const bool bFixScale, const bool bActiveLC);
 
+  void SetTracker(Tracking *pTracker);
+
+  void SetLocalMapper(LocalMapping *pLocalMapper);
   // Main function
   void Run();
+
+public:
+  Viewer *mpViewer;
 
 protected:
   Atlas *mpAtlas;
   KeyFrameDatabase *mpKeyFrameDB;
   ORBVocabulary *mpORBVocabulary;
+
+  Tracking *mpTracker;
+  LocalMapping *mpLocalMapper;
 
   // Loop detector parameters
   // 表示循环检测中的视差一致性阈值。

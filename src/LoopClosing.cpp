@@ -18,5 +18,13 @@ LoopClosing::LoopClosing(ORB_SLAM3::Atlas *pAtlas,
   mnCorrectionGBA = 0;
 }
 
+void LoopClosing::SetTracker(ORB_SLAM3::Tracking *pTracker) {
+  mpTracker = pTracker;
+}
+
+void LoopClosing::SetLocalMapper(ORB_SLAM3::LocalMapping *pLocalMapper) {
+  mpLocalMapper = pLocalMapper;
+}
+
 void LoopClosing::Run() { std::cout << "LoopClosing is running" << std::endl; }
 } // namespace ORB_SLAM3

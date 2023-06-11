@@ -29,7 +29,14 @@ public:
   std::string atlasLoadFile() { return sLoadFrom_; };
   std::string atlasSaveFile() { return sSaveto_; };
 
-  float thFarPoints() {return thFarPoints_;}
+  cv::Size newImSize() { return newImSize_; }
+  float fps() { return fps_; }
+  float thFarPoints() { return thFarPoints_; }
+  float viewPointX() { return viewPointX_; }
+  float viewPointY() { return viewPointY_; }
+  float viewPointZ() { return viewPointZ_; }
+  float viewPointF() { return viewPointF_; }
+  float imageViewerScale() { return imageViewerScale_; };
 
 private:
   void readCamera1(cv::FileStorage &fSettings);

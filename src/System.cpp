@@ -4,6 +4,7 @@
 #include "System.h"
 
 namespace ORB_SLAM3 {
+eLevel Verbose::th = eLevel::VERBOSITY_NORMAL;
 
 System::System(const std::string &strVocFile,
                const std::string &strSettingsFile, eSensor sensor,
@@ -144,6 +145,29 @@ System::System(const std::string &strVocFile,
   mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary,
                                  mSensor != eSensor::MONOCULAR, activeLC);
   mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+
+  // Set pointers between threads
+  mpTracker->SetLocalMapper(mpLocalMapper);
+  mpTracker->SetLoopClosing(mpLoopCloser);
+
+  mpLocalMapper->SetTracker(mpTracker);
+  mpLocalMapper->SetLoopCloser(mpLoopCloser);
+
+  mpLoopCloser->SetTracker(mpTracker);
+  mpLoopCloser->SetLocalMapper(mpLocalMapper);
+
+  // Initialize the viewer thread and launch
+  if (bUseViewer) {
+    mpViewer = new Viewer(this, mpFrameDrawer, mpMapDrawer, mpTracker,
+                          strSettingsFile, settings_.get());
+    mptViewer = new thread(&Viewer::Run, mpViewer);
+    mpTracker->SetViewer(mpViewer);
+    mpLoopCloser->mpViewer = mpViewer;
+    mpViewer->both = mpFrameDrawer->both;
+  }
+
+  // Fix verbosity
+  Verbose::SetTh(eLevel::VERBOSITY_QUIET);
 }
 
 } // namespace ORB_SLAM3

@@ -20,10 +20,24 @@
 #include "ParamEnum.h"
 #include "Setting.h"
 #include "Tracking.h"
+#include "Viewer.h"
 
 namespace ORB_SLAM3 {
 class Tracking;
 class LocalMapping;
+class Viewer;
+class LocalMapping;
+class LoopClosing;
+class KeyFrameDatabase;
+
+/**
+ * 用于控制程序的输出信息的详细程度。通过设置eLevel的不同级别（例如Debug、Info、Warning、Error等），可以控制程序输出相应的信息。
+ */
+class Verbose {
+public:
+  static ORB_SLAM3::eLevel th;
+  static void SetTh(ORB_SLAM3::eLevel _th) { th = _th; }
+};
 
 class System {
 public:
@@ -73,6 +87,9 @@ private:
   // thread) afterwards.
   LoopClosing *mpLoopCloser;
 
+  // The viewer draws the map and the current camera pose. It uses Pangolin.
+  Viewer *mpViewer;
+
   // 绘制当前帧和匹配地图点的可视化信息，将这些信息显示在屏幕上
   FrameDrawer *mpFrameDrawer;
 
@@ -83,6 +100,7 @@ private:
   // System object
   std::thread *mptLocalMapping;
   std::thread *mptLoopClosing;
+  std::thread *mptViewer;
 
   //
   std::string mStrLoadAtlasFromFile;
