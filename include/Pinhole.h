@@ -27,6 +27,8 @@ public:
     }
   }
 
+  bool IsEqual(GeometricCamera* pCam);
+
 private:
   TwoViewReconstruction *tvr;
 };

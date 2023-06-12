@@ -30,6 +30,7 @@ public:
   std::string atlasSaveFile() { return sSaveto_; };
 
   cv::Size newImSize() { return newImSize_; }
+  GeometricCamera *camera1() { return calibration1_; }
   float fps() { return fps_; }
   float thFarPoints() { return thFarPoints_; }
   float viewPointX() { return viewPointX_; }
@@ -63,10 +64,9 @@ private:
   /**
    * Visual stuff
    */
-  std::unique_ptr<GeometricCamera> calibration1_, calibration2_;
-  // GeometricCamera *calibration1_, *calibration2_;
-  // GeometricCamera *originalCalib1_, *originalCalib2_;
-  std::unique_ptr<GeometricCamera> originalCalib1_, originalCalib2_;
+  GeometricCamera *calibration1_, *calibration2_;
+  GeometricCamera *originalCalib1_, *originalCalib2_;
+  // std::unique_ptr<GeometricCamera> originalCalib1_, originalCalib2_;
   std::vector<float> vPinHoleDistorsion1_, vPinHoleDistorsion2_;
 
   cv::Size originalImSize_, newImSize_;

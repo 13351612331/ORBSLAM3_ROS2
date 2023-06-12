@@ -11,6 +11,7 @@
 #include "MapDrawer.h"
 #include "ORBVocabulary.h"
 #include "ParamEnum.h"
+#include "Setting.h"
 #include "System.h"
 #include "Viewer.h"
 #include <eigen3/Eigen/Core>
@@ -20,6 +21,8 @@ class System;
 class LocalMapping;
 class LoopClosing;
 class Viewer;
+class Setting;
+class Atlas;
 class Tracking {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -33,12 +36,23 @@ public:
   void SetLoopClosing(LoopClosing *pLoopClosing);
   void SetViewer(Viewer *pViewer);
 
+  float GetImageScale();
+
+protected:
+  void newParameterLoader(Setting *settings);
+
 protected:
   LocalMapping *mpLocalMapper;
   LoopClosing *mpLoopClosing;
 
+  // Atlas
+  Atlas *mpAtlas;
   // Drawers
-  Viewer* mpViewer;
+  Viewer *mpViewer;
+
+  float mImageScale;
+
+  GeometricCamera *mpCamera;
 };
 } // namespace ORB_SLAM3
 

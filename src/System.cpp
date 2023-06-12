@@ -170,4 +170,5 @@ System::System(const std::string &strVocFile,
   Verbose::SetTh(eLevel::VERBOSITY_QUIET);
 }
 
+float System::GetImageScale() { return mpTracker->GetImageScale(); }
 } // namespace ORB_SLAM3

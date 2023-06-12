@@ -148,8 +148,8 @@ void Setting::readCamera1(cv::FileStorage &fSettings) {
 
     vCalibration = {fx, fy, cx, cy};
 
-    calibration1_ = std::make_unique<Pinhole>(vCalibration);
-    originalCalib1_ = std::make_unique<Pinhole>(vCalibration);
+    calibration1_ = new Pinhole(vCalibration);
+    originalCalib1_ = new Pinhole(vCalibration);
 
     // Check if it is a distorted PinHole
     // 判断是否为畸变的PinHole模型

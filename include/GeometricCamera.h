@@ -4,6 +4,7 @@
 
 #ifndef ORB_SLAM3_GEOMETRICCAMERA_H
 #define ORB_SLAM3_GEOMETRICCAMERA_H
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -14,6 +15,12 @@ public:
   explicit GeometricCamera(std::vector<float> _vParameters)
       : mvParameters(std::move(_vParameters)) {}
   ~GeometricCamera() = default;
+
+  unsigned int GetType() { return mnType; }
+
+  float getParameter(const int i) { return mvParameters[i]; }
+
+  size_t size() { return mvParameters.size(); }
 
 public:
   const static unsigned int CAM_PINHOLE = 0;

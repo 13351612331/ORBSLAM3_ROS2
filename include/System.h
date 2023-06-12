@@ -41,6 +41,7 @@ public:
 
 class System {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   /**
    * @brief Initialize the SLAM system. It launches the Local Mapping , Loop
    * Closing and Viewer threads.
@@ -59,6 +60,8 @@ public:
   // Disable copy constructor
   System(const System &) = delete;
   System &operator=(const System &) = delete;
+
+  float GetImageScale();
 
 private:
   eSensor mSensor; // Input sensor
