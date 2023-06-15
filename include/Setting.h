@@ -30,14 +30,31 @@ public:
   std::string atlasSaveFile() { return sSaveto_; };
 
   cv::Size newImSize() { return newImSize_; }
+
+  CameraType cameraType() { return m_cameraType; }
   GeometricCamera *camera1() { return calibration1_; }
+  cv::Mat camera1DistortionCoef() {
+    return cv::Mat(vPinHoleDistorsion1_.size(), 1, CV_32F,
+                   vPinHoleDistorsion1_.data());
+  }
+
+  bool needToUndistort() { return bNeedToUndistort_; }
+
   float fps() { return fps_; }
+  bool rgb() { return bRGB_; }
   float thFarPoints() { return thFarPoints_; }
   float viewPointX() { return viewPointX_; }
   float viewPointY() { return viewPointY_; }
   float viewPointZ() { return viewPointZ_; }
   float viewPointF() { return viewPointF_; }
   float imageViewerScale() { return imageViewerScale_; };
+
+  // get ORB parameters
+  int nFeatures() { return nFeatures_; }
+  int nLevels() { return nLevels_; }
+  float initThFAST() { return initThFAST_; }
+  float minThFAST() { return minThFAST_; }
+  float scaleFactor() { return scaleFactor_; }
 
 private:
   void readCamera1(cv::FileStorage &fSettings);
@@ -82,7 +99,7 @@ private:
   int nFeatures_;
   float scaleFactor_;
   int nLevels_;
-  int initThFAST, minThFAST_;
+  int initThFAST_, minThFAST_;
 
   /**
    * Viewer stuff

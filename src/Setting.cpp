@@ -217,7 +217,7 @@ void Setting::readORB(cv::FileStorage &fSettings) {
   scaleFactor_ =
       readParameter<float>(fSettings, "ORBextractor.scaleFactor", found);
   nLevels_ = readParameter<int>(fSettings, "ORBextractor.nLevels", found);
-  initThFAST = readParameter<int>(fSettings, "ORBextractor.iniThFAST", found);
+  initThFAST_ = readParameter<int>(fSettings, "ORBextractor.iniThFAST", found);
   minThFAST_ = readParameter<int>(fSettings, "ORBextractor.minThFAST", found);
 }
 

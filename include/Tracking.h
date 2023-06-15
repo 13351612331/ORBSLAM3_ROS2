@@ -10,11 +10,14 @@
 #include "KeyFrameDatabase.h"
 #include "MapDrawer.h"
 #include "ORBVocabulary.h"
+#include "ORBextractor.h"
 #include "ParamEnum.h"
 #include "Setting.h"
 #include "System.h"
 #include "Viewer.h"
 #include <eigen3/Eigen/Core>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 namespace ORB_SLAM3 {
 class System;
@@ -38,6 +41,10 @@ public:
 
   float GetImageScale();
 
+public:
+  // Input sensor
+  eSensor mSensor;
+
 protected:
   void newParameterLoader(Setting *settings);
 
@@ -45,12 +52,32 @@ protected:
   LocalMapping *mpLocalMapper;
   LoopClosing *mpLoopClosing;
 
+  // ORB
+  ORBextractor *mpORBextractorLeft; // 用来在左图像上提取特征的
+  ORBextractor *mpIniORBextractor; // 用来在初始帧图像上提取特征的
+
   // Atlas
   Atlas *mpAtlas;
+
   // Drawers
   Viewer *mpViewer;
 
+  // Calibration matrix
+  cv::Mat mK;
+  Eigen::Matrix3f mK_;
+  cv::Mat mDistCoef;
   float mImageScale;
+
+  // New KeyFrame rules (according to fps)
+  // mMinFrames和mMaxFrames分别表示两个阈值：
+  // 当当前帧与上一个关键帧的帧数差超过mMinFrames时，就可以将当前帧作为一个新的关键帧；
+  // 而当当前帧与上一个关键帧的帧数差超过mMaxFrames时，则必须将当前帧作为新的关键帧，无论其是否能够提供重要信息。
+  // 这样可以避免过多或者过少的关键帧，从而保证系统的效率和鲁棒性。
+  int mMinFrames;
+  int mMaxFrames;
+
+  // Color order (true RGB , false BGR , ignored if grayscale)
+  bool mbRGB;
 
   GeometricCamera *mpCamera;
 };
