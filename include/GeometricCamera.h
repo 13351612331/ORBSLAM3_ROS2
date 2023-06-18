@@ -22,8 +22,11 @@ public:
 
   size_t size() { return mvParameters.size(); }
 
+  unsigned int GetId() { return mnId; }
+
 public:
   const static unsigned int CAM_PINHOLE = 0;
+  const static unsigned int CAM_FISHEYE = 1;
 
   static long unsigned int nNextId;
 

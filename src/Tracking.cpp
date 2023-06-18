@@ -13,6 +13,26 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
   // Load camera parameters from settings file
   if (settings) {
     newParameterLoader(settings);
+  } else {
+    std::cout << "Tracking: Please Load setting files" << std::endl;
+  }
+
+  initID = 0;
+  lastID = 0;
+  mnNumDataset = 0;
+
+  vector<GeometricCamera *> vpCams = mpAtlas->GetAllCameras();
+  std::cout << "There are " << vpCams.size() << " camera in the atlas"
+            << std::endl;
+  for (const auto &pCam : vpCams) {
+    std::cout << "Camera " << pCam->GetId();
+    if (pCam->GetType() == GeometricCamera::CAM_PINHOLE) {
+      std::cout << " is pinhole" << std::endl;
+    } else if (pCam->GetType() == GeometricCamera::CAM_FISHEYE) {
+      std::cout << " is fisheye" << std::endl;
+    } else {
+      std::cout << " is unknown" << std::endl;
+    }
   }
 }
 
@@ -88,17 +108,22 @@ void Tracking::newParameterLoader(ORB_SLAM3::Setting *settings) {
   int fMinThFAST = settings->minThFAST();
   float fScaleFactor = settings->scaleFactor();
 
-  mpORBextractorLeft = new ORBextractor(nFeatures , fScaleFactor , nLevels , fIniThFAST , fMinThFAST);
+  mpORBextractorLeft = new ORBextractor(nFeatures, fScaleFactor, nLevels,
+                                        fIniThFAST, fMinThFAST);
 
-  if(mSensor == eSensor::STEREO || mSensor == eSensor::IMU_STEREO){
-    std::cerr << "Tracking: sensor type of STEREO or IMU_STEREO not exit!!!" << std::endl;
+  if (mSensor == eSensor::STEREO || mSensor == eSensor::IMU_STEREO) {
+    std::cerr << "Tracking: sensor type of STEREO or IMU_STEREO not exit!!!"
+              << std::endl;
     exit(-1);
   }
 
-  if(mSensor == eSensor::MONOCULAR || mSensor == eSensor::IMU_MONOCULAR){
-    mpIniORBextractor = new ORBextractor(nFeatures , fScaleFactor , nLevels , fIniThFAST , fMinThFAST);
+  if (mSensor == eSensor::MONOCULAR || mSensor == eSensor::IMU_MONOCULAR) {
+    mpIniORBextractor = new ORBextractor(5 * nFeatures, fScaleFactor, nLevels,
+                                         fIniThFAST, fMinThFAST);
   }
 
   // IMU parameters
+  std::cout << "Tracking: if you sensor type is IMU , please add imu parameters"
+            << std::endl;
 }
 } // namespace ORB_SLAM3

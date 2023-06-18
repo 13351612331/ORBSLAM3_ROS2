@@ -41,4 +41,6 @@ GeometricCamera *Atlas::AddCamera(ORB_SLAM3::GeometricCamera *pCam) {
     return pCam;
   }
 }
+
+std::vector<GeometricCamera *> Atlas::GetAllCameras() { return mvpCameras; }
 } // namespace ORB_SLAM3

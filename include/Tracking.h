@@ -79,7 +79,11 @@ protected:
   // Color order (true RGB , false BGR , ignored if grayscale)
   bool mbRGB;
 
+  int mnNumDataset;
+
   GeometricCamera *mpCamera;
+
+  int initID, lastID;
 };
 } // namespace ORB_SLAM3
 

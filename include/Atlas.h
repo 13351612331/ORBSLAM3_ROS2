@@ -25,6 +25,7 @@ public:
    * @return 返回相机对象的指针
    */
   GeometricCamera *AddCamera(GeometricCamera *pCam);
+  std::vector<GeometricCamera *> GetAllCameras();
 
 protected:
   Map *mpCurrentMap;
