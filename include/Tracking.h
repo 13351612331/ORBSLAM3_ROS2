@@ -41,9 +41,15 @@ public:
 
   float GetImageScale();
 
+  // Use this function if you have deactivated local mapping and you only want to localize the camera.
+  void InformOnlyTracking(const bool &flag);
+
 public:
   // Input sensor
   eSensor mSensor;
+
+  // True if local mapping is deactivated and we are performing only localization
+  bool mbOnlyTracking;
 
 protected:
   void newParameterLoader(Setting *settings);

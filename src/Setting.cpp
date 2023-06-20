@@ -82,7 +82,7 @@ int Setting::readParameter<int>(cv::FileStorage &fSettings,
 }
 
 Setting::Setting(const std::string &configFile, ORB_SLAM3::eSensor sensor)
-    : bNeedToUndistort_(false) {
+    : bNeedToUndistort_(false), bNeedToResize1_(false) {
   m_sensor = sensor;
 
   // open setting file
@@ -199,12 +199,16 @@ void Setting::readImageInfo(cv::FileStorage &fSettings) {
   int newHeight =
       readParameter<int>(fSettings, "Camera.newHeight", found, false);
   if (found) {
-    std::cout << "newHeight found..." << std::endl;
+    bNeedToResize1_ = true;
+    std::cout << "[Setting::readImageInfo][INFO] newHeight found..."
+              << std::endl;
   }
 
   int newWidth = readParameter<int>(fSettings, "Camera.newWidth", found, false);
   if (found) {
-    std::cout << "newWidth found..." << std::endl;
+    bNeedToResize1_ = true;
+    std::cout << "[Setting::readImageInfo][INFO] newWidth found..."
+              << std::endl;
   }
   fps_ = readParameter<int>(fSettings, "Camera.fps", found);
   bRGB_ = readParameter<int>(fSettings, "Camera.RGB", found);

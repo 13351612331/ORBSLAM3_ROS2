@@ -64,9 +64,12 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if(imageScale != 1.f){
-      std::cerr << "mono_tum: imageScale is not equal 1.f , please scale image" << std::endl;
+    if (imageScale != 1.f) {
+      std::cerr << "mono_tum: imageScale is not equal 1.f , please scale image"
+                << std::endl;
     }
+
+    SLAM.TrackMonocular(im, tframe);
   }
 }
 

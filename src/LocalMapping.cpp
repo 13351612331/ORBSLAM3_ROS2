@@ -8,7 +8,8 @@ LocalMapping::LocalMapping(ORB_SLAM3::System *pSys, ORB_SLAM3::Atlas *pAtlas,
                            const float bMonocular, bool bInertial,
                            const std::string &_strSeqName)
     : mpSystem(pSys), mbMonocular(bMonocular), mbInertial(bInertial),
-      mpAtlas(pAtlas) {
+      mpAtlas(pAtlas), mbStopRequested(false), mbAbortBA(false),
+      mbFinished(true), mbStopped(false) {
   mnMatchesInliers = 0;
 
   mbBadImu = false;
@@ -28,6 +29,35 @@ void LocalMapping::SetTracker(ORB_SLAM3::Tracking *pTracker) {
 }
 
 void LocalMapping::Run() {
+  mbFinished = false;
   std::cout << "Local Mapping is running" << std::endl;
+}
+
+void LocalMapping::RequestStop() {
+  unique_lock<mutex> lock(mMutexStop);
+  mbStopRequested = true;
+  unique_lock<mutex> lock2(mMutexNewKFs);
+  mbAbortBA = true;
+}
+
+bool LocalMapping::isStopped() {
+  unique_lock<mutex> lock(mMutexStop);
+  return mbStopRequested;
+}
+
+void LocalMapping::Release() {
+  unique_lock<mutex> lock(mMutexStop);
+  unique_lock<mutex> lock2(mMutexFinish);
+  if (mbFinished)
+    return;
+  mbStopped = false;
+  mbStopRequested = false;
+  for (list<KeyFrame *>::iterator lit = mlNewKeyFrames.begin(),
+                                  lend = mlNewKeyFrames.end();
+       lit != lend; lit++)
+    delete *lit;
+  mlNewKeyFrames.clear();
+
+  std::cout << "[LocalMapping::Release][INFO] Local Mapping RELEASE" << std::endl;
 }
 } // namespace ORB_SLAM3

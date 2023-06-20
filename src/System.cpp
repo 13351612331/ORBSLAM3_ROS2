@@ -9,7 +9,8 @@ eLevel Verbose::th = eLevel::VERBOSITY_NORMAL;
 System::System(const std::string &strVocFile,
                const std::string &strSettingsFile, eSensor sensor,
                bool bUseViewer, int initFr, const std::string &strSequence)
-    : mSensor(sensor) {
+    : mSensor(sensor), mbShutDown(false), mbActivateLocalizationMode(false),
+      mbDeactivateLocalizationMode(false) {
   // Output welcome message
   std::cout << std::endl
             << "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard "
@@ -171,4 +172,63 @@ System::System(const std::string &strVocFile,
 }
 
 float System::GetImageScale() { return mpTracker->GetImageScale(); }
+
+Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp,
+                                    const vector<IMU::Point> &vImuMeas,
+                                    std::string filename) {
+  /**
+   * 在加锁后，使用if语句判断当前视觉SLAM系统是否已经被关闭（mbShutDown），
+   * 如果已经关闭则直接返回一个单位SE3变换（Sophus::SE3f()），表示相机没有运动。
+   * 这个判断主要是为了避免在系统关闭期间重复执行数据处理或更新操作，浪费系统资源。
+   */
+  {
+    unique_lock<mutex> lock(mMutexReset);
+    if (mbShutDown)
+      return Sophus::SE3f();
+  }
+
+  if (mSensor != eSensor::MONOCULAR && mSensor != eSensor::IMU_MONOCULAR) {
+    std::cerr
+        << "[System::TrackMonocular][ERROR] you called TrackMonocular but "
+           "input sensor was not set to MONOCULAR nor MONOCULAR-Inertial."
+        << std::endl;
+    exit(-1);
+  }
+
+  cv::Mat imToFeed = im.clone();
+  if (settings_ && settings_->needToResize()) {
+    std::cerr << "[System::TrackMonocular][ERROR] input image need to resize."
+              << std::endl;
+    exit(-1);
+  }
+
+  // check mode change
+  {
+    unique_lock<mutex> lock(mMutexReset);
+    // 激活定位模式
+    if (mbActivateLocalizationMode) {
+      // 请求停止LocalMapping线程
+      mpLocalMapper->RequestStop();
+
+      // wait until Local Mapping has effectively stopped
+      while (!mpLocalMapper->isStopped()) {
+        usleep(1000);
+      }
+
+      // 通知Tracker只进行跟踪而不进行地图构建
+      mpTracker->InformOnlyTracking(true);
+      // 标志位清零，表示激活定位模式的工作已经完成
+      mbActivateLocalizationMode = false;
+    }
+    // 关闭定位模式
+    if (mbDeactivateLocalizationMode) {
+      // 通知Tracker恢复进行跟踪和地图构建的工作
+      mpTracker->InformOnlyTracking(false);
+      // 释放LocalMapping线程所占用的资源
+      mpLocalMapper->Release();
+      // 标志位清零，表示关闭定位模式的工作已经完成
+      mbDeactivateLocalizationMode = false;
+    }
+  }
+}
 } // namespace ORB_SLAM3

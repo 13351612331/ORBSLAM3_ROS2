@@ -9,7 +9,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
                    KeyFrameDatabase *pKFDB, const std::string &strSettingPath,
                    const ORB_SLAM3::eSensor sensor, Setting *settings,
                    const std::string &_nameSeq)
-    : mpAtlas(pAtlas), mSensor(sensor) {
+    : mpAtlas(pAtlas), mSensor(sensor), mbOnlyTracking(false) {
   // Load camera parameters from settings file
   if (settings) {
     newParameterLoader(settings);
@@ -126,4 +126,6 @@ void Tracking::newParameterLoader(ORB_SLAM3::Setting *settings) {
   std::cout << "Tracking: if you sensor type is IMU , please add imu parameters"
             << std::endl;
 }
+
+void Tracking::InformOnlyTracking(const bool &flag) { mbOnlyTracking = flag; }
 } // namespace ORB_SLAM3

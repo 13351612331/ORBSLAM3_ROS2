@@ -38,23 +38,24 @@ public:
                    vPinHoleDistorsion1_.data());
   }
 
-  bool needToUndistort() { return bNeedToUndistort_; }
+  [[nodiscard]] bool needToUndistort() const { return bNeedToUndistort_; }
+  [[nodiscard]] bool needToResize() const { return bNeedToResize1_; }
 
-  float fps() { return fps_; }
-  bool rgb() { return bRGB_; }
-  float thFarPoints() { return thFarPoints_; }
-  float viewPointX() { return viewPointX_; }
-  float viewPointY() { return viewPointY_; }
-  float viewPointZ() { return viewPointZ_; }
-  float viewPointF() { return viewPointF_; }
-  float imageViewerScale() { return imageViewerScale_; };
+  [[nodiscard]] float fps() const { return fps_; }
+  [[nodiscard]] bool rgb() const { return bRGB_; }
+  [[nodiscard]] float thFarPoints() const { return thFarPoints_; }
+  [[nodiscard]] float viewPointX() const { return viewPointX_; }
+  [[nodiscard]] float viewPointY() const { return viewPointY_; }
+  [[nodiscard]] float viewPointZ() const { return viewPointZ_; }
+  [[nodiscard]] float viewPointF() const { return viewPointF_; }
+  [[nodiscard]] float imageViewerScale() const { return imageViewerScale_; };
 
   // get ORB parameters
-  int nFeatures() { return nFeatures_; }
-  int nLevels() { return nLevels_; }
-  float initThFAST() { return initThFAST_; }
-  float minThFAST() { return minThFAST_; }
-  float scaleFactor() { return scaleFactor_; }
+  [[nodiscard]] int nFeatures() const { return nFeatures_; }
+  [[nodiscard]] int nLevels() const { return nLevels_; }
+  [[nodiscard]] float initThFAST() const { return float(initThFAST_); }
+  [[nodiscard]] float minThFAST() const { return float(minThFAST_); }
+  [[nodiscard]] float scaleFactor() const { return scaleFactor_; }
 
 private:
   void readCamera1(cv::FileStorage &fSettings);
@@ -92,6 +93,7 @@ private:
 
   // 表示是否需要对图像进行失真校正的标志位
   bool bNeedToUndistort_;
+  bool bNeedToResize1_;
 
   /**
    * ORB stuff

@@ -5,6 +5,8 @@
 #ifndef ORB_SLAM3_SYSTEM_H
 #define ORB_SLAM3_SYSTEM_H
 
+#include "Eigen/Core"
+#include "sophus/se3.hpp"
 #include <cstring>
 #include <iostream>
 #include <opencv2/core/core.hpp>
@@ -12,6 +14,7 @@
 
 #include "Atlas.h"
 #include "FrameDrawer.h"
+#include "ImuTypes.h"
 #include "KeyFrameDatabase.h"
 #include "LocalMapping.h"
 #include "LoopClosing.h"
@@ -61,6 +64,14 @@ public:
   System(const System &) = delete;
   System &operator=(const System &) = delete;
 
+  // Process the given monocular frame and optionally imu data
+  // Input images: RGB(CV_8UC3) or grayscale(CV_8U). RGB is converted to
+  // grayscale. Returns the camera pose (empty if tracking fails).
+  Sophus::SE3f
+  TrackMonocular(const cv::Mat &im, const double &timestamp,
+                 const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(),
+                 string filename = "");
+
   float GetImageScale();
 
 private:
@@ -104,6 +115,14 @@ private:
   std::thread *mptLocalMapping;
   std::thread *mptLoopClosing;
   std::thread *mptViewer;
+
+  // Reset flag
+  std::mutex mMutexReset;
+
+  // Shutdown flag
+  bool mbShutDown;
+  bool mbActivateLocalizationMode;
+  bool mbDeactivateLocalizationMode;
 
   //
   std::string mStrLoadAtlasFromFile;

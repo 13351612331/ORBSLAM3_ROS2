@@ -11,6 +11,8 @@ MESSAGE(${OpenCV_INCLUDE_DIRS})
 
 include_directories(include
         Thirdparty
+        Thirdparty/Sophus
+        /usr/include/eigen3
         ${OpenCV_INCLUDE_DIRS})
 file(GLOB_RECURSE SLAM_LIBS_RESOURCES src/*.cpp)
 add_library(SLAM_LIBS SHARED ${SLAM_LIBS_RESOURCES})
