@@ -10,7 +10,8 @@ System::System(const std::string &strVocFile,
                const std::string &strSettingsFile, eSensor sensor,
                bool bUseViewer, int initFr, const std::string &strSequence)
     : mSensor(sensor), mbShutDown(false), mbActivateLocalizationMode(false),
-      mbDeactivateLocalizationMode(false) {
+      mbDeactivateLocalizationMode(false), mbReset(false),
+      mbResetActiveMap(false) {
   // Output welcome message
   std::cout << std::endl
             << "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard "
@@ -229,6 +230,34 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp,
       // 标志位清零，表示关闭定位模式的工作已经完成
       mbDeactivateLocalizationMode = false;
     }
+
+    // check reset
+    {
+      unique_lock<mutex> lock(mMutexReset);
+      // mbReset 被设置为 true，表示需要重置系统
+      if (mbReset) {
+        mpTracker->Reset();
+        mbReset = false;
+        mbResetActiveMap = false;
+      }
+      // 如果 mbReset 为 false，但 mbResetActiveMap 被设置为
+      // true，表示需要仅重置活动地图（active
+      // map）。这种情况通常发生在单目相机的场景下。
+      else if (mbResetActiveMap) {
+        std::cout << "[System::TrackMonocular][INFO] SYSTEM-> Resetting active "
+                     "map in monocular case"
+                  << std::endl;
+        mpTracker->ResetActiveMap();
+        mbResetActiveMap = false;
+      }
+    }
+
+    if (mSensor == eSensor::IMU_MONOCULAR)
+      std::cerr
+          << "[System::TrackMonocular][ERROR] IMU Monocular is not implement"
+          << std::endl;
+
+    //    Sophus::SE3f Tcw = mpTracker->GrabImageMonocular()
   }
 }
 } // namespace ORB_SLAM3

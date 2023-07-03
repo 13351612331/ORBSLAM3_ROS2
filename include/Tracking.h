@@ -18,6 +18,7 @@
 #include <eigen3/Eigen/Core>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
+#include <opencv2/imgproc.hpp>
 
 namespace ORB_SLAM3 {
 class System;
@@ -39,16 +40,30 @@ public:
   void SetLoopClosing(LoopClosing *pLoopClosing);
   void SetViewer(Viewer *pViewer);
 
+  // Preprocess the input and call Track(). Extract features and performs stereo
+  // matching.
+  Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp,
+                                  string filename);
+
   float GetImageScale();
 
-  // Use this function if you have deactivated local mapping and you only want to localize the camera.
+  // Use this function if you have deactivated local mapping and you only want
+  // to localize the camera.
   void InformOnlyTracking(const bool &flag);
 
+  void Reset(bool bLocMap = false);
+  void ResetActiveMap(bool bLocMap = false);
+
 public:
+  eTrackingState mState;
+
   // Input sensor
   eSensor mSensor;
 
-  // True if local mapping is deactivated and we are performing only localization
+  cv::Mat mImGray;
+
+  // True if local mapping is deactivated and we are performing only
+  // localization
   bool mbOnlyTracking;
 
 protected:

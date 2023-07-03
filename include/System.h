@@ -118,6 +118,8 @@ private:
 
   // Reset flag
   std::mutex mMutexReset;
+  bool mbReset;
+  bool mbResetActiveMap;
 
   // Shutdown flag
   bool mbShutDown;

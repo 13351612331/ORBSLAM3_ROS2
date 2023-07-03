@@ -9,7 +9,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
                    KeyFrameDatabase *pKFDB, const std::string &strSettingPath,
                    const ORB_SLAM3::eSensor sensor, Setting *settings,
                    const std::string &_nameSeq)
-    : mpAtlas(pAtlas), mSensor(sensor), mbOnlyTracking(false) {
+    : mpAtlas(pAtlas), mSensor(sensor), mbOnlyTracking(false),mState(eTrackingState::NO_IMAGE_YET) {
   // Load camera parameters from settings file
   if (settings) {
     newParameterLoader(settings);
@@ -128,4 +128,34 @@ void Tracking::newParameterLoader(ORB_SLAM3::Setting *settings) {
 }
 
 void Tracking::InformOnlyTracking(const bool &flag) { mbOnlyTracking = flag; }
+
+void Tracking::Reset(bool bLocMap) {
+  std::cerr << "[Tracking::Reset][ERROR] Reset is not implement" << std::endl;
+}
+
+void Tracking::ResetActiveMap(bool bLocMap) {
+  std::cerr << "[Tracking::Reset][ERROR] Reset Active Map is not implement"
+            << std::endl;
+}
+
+Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im,
+                                          const double &timestamp,
+                                          std::string filename) {
+  mImGray = im;
+  if (mImGray.channels() == 3) {
+    if (mbRGB)
+      cvtColor(mImGray, mImGray, cv::COLOR_RGB2GRAY);
+    else
+      cvtColor(mImGray, mImGray, cv::COLOR_BGR2GRAY);
+  } else if (mImGray.channels() == 4) {
+    if (mbRGB)
+      cvtColor(mImGray, mImGray, cv::COLOR_RGBA2GRAY);
+    else
+      cvtColor(mImGray, mImGray, cv::COLOR_BGRA2GRAY);
+  }
+
+  if(mSensor == eSensor::MONOCULAR){
+    if(mState == eTrackingState::NOT_INITIALIZED || mState == eTrackingState::NO_IMAGE_YET || (lastID - initID) < mMaxFrames){}
+  }
+}
 } // namespace ORB_SLAM3

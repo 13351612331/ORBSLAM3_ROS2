@@ -7,6 +7,9 @@
 namespace ORB_SLAM3 {
 namespace IMU {
 class Point {};
+
+// IMU calibration (Tbc, Tbc , noise)
+class Calib {};
 } // namespace IMU
 } // namespace ORB_SLAM3
 #endif // ORB_SLAM3_IMUTYPES_H
