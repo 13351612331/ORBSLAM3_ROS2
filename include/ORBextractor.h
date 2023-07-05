@@ -6,6 +6,7 @@
 #define ORB_SLAM3_ORBEXTRACTOR_H
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 #include <vector>
 
@@ -52,7 +53,16 @@ public:
   }
 
 protected:
+  // 计算图像金字塔
   void ComputePyramid(cv::Mat image);
+  // 基于四叉树的关键点计算方法
+  void
+  ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>> &allKeypoints);
+
+  std::vector<cv::KeyPoint>
+  DistributeOctTree(const std::vector<cv::KeyPoint> &vToDistributeKeys,
+                    const int &minX, const int &maxX, const int &minY,
+                    const int &maxY, const int &nFeatures, const int &level);
 
 public:
   std::vector<cv::Mat> mvImagePyramid; // 用于存储图像金字塔的所有层
@@ -66,6 +76,7 @@ protected:
 
   std::vector<int> mnFeaturesPerLevel; // 每个金字塔层级中特征点的数量
 
+  std::vector<int> umax;
   /**
    * 用于图像金字塔的构建和尺度恢复等方面
    */

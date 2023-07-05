@@ -27,9 +27,11 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
   // ORB extraction
 }
 
-void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1) {
-  vector<int> vLapping = {x0 , x1};
-  if(flag == 0)
-//    monoLeft = (*mpORBextractorLeft)()
+void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0,
+                       const int x1) {
+  vector<int> vLapping = {x0, x1};
+  if (flag == 0)
+    monoLeft =
+        (*mpORBextractorLeft)(im, cv::Mat(), mvKeys, mDescriptors, vLapping);
 }
 } // namespace ORB_SLAM3

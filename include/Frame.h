@@ -36,6 +36,13 @@ public:
    */
   void ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1);
 
+public:
+  std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
+  std::vector<cv::KeyPoint> mkKeysUn;
+
+  cv::Mat mDescriptors, mDescriptorsRight;
+
+
   static long unsigned int nNextId;
   long unsigned mnId;
 
@@ -49,7 +56,7 @@ public:
   vector<float> mvInvLevelSigma2;
 
   // Number of Non Lapping Keypoints
-  int monoLeft , monoRight;
+  int monoLeft, monoRight;
 };
 } // namespace ORB_SLAM3
 
