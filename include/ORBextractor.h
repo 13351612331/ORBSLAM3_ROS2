@@ -8,9 +8,24 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
+#include <list>
 #include <vector>
 
 namespace ORB_SLAM3 {
+
+class ExtractorNode {
+public:
+  ExtractorNode() : bNoMore(false) {}
+
+  void DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNode &n3,
+                  ExtractorNode &n4);
+
+  std::vector<cv::KeyPoint> vKeys;
+  cv::Point2i UL, UR, BL, BR;
+  std::list<ExtractorNode>::iterator lit;
+  bool bNoMore;
+};
+
 class ORBextractor {
 public:
   ORBextractor(int nfeatures, float scaleFactor, int nlevels, int iniThFAST,
@@ -68,6 +83,7 @@ public:
   std::vector<cv::Mat> mvImagePyramid; // 用于存储图像金字塔的所有层
 
 protected:
+  std::vector<cv::Point> pattern;
   int nfeatures;
   double scaleFactor;
   int nlevels;
