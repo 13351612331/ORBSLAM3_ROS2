@@ -11,6 +11,52 @@ const int PATCH_SIZE = 31;
 const int HALF_PATCH_SIZE = 15;
 const int EDGE_THRESHOLD = 19;
 
+static float IC_Angle(const cv::Mat &image, cv::Point2f pt,
+                      const std::vector<int> &u_max) {
+  // 图像的矩，前者是按照图像块的y坐标加权，后者是按照图像块的x坐标加权
+  int m_01 = 0, m_10 = 0;
+  // 获得这个特征点所在的图像块的中心点坐标灰度值的指针center
+  const uchar *center = &image.at<uchar>(cvRound(pt.y), cvRound(pt.x));
+
+  // Treat the center line differently, v=0
+  // 这条v=0中心线的计算需要特殊对待
+  // 由于是中心行+若干行对，所以PATCH_SIZE应该是个奇数
+  for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
+    // 注意这里的center下标u可以是负的！中心水平线上的像素按x坐标（也就是u坐标）加权
+    // center[u]表示中心水平线上距离中心像素点u个像素的像素值
+    m_10 += u * center[u];
+
+  // Go line by line in the circular patch
+  // 这里的step1表示这个图像一行包含的字节总数。参考[https://blog.csdn.net/qianqing13579/article/details/45318279]
+  int step = (int)image.step1();
+  // 注意这里是以v=0中心线为对称轴，然后对称地每成对的两行之间进行遍历，这样处理加快了计算速度
+  for (int v = 1; v < HALF_PATCH_SIZE; ++v) {
+    // Proceed over the two lines
+    // 本来m_01应该是一列一列地计算的，但是由于对称以及坐标x,y正负的原因，可以一次计算两行
+    int v_sum = 0;
+    // 获取某行像素横坐标的最大范围，注意这里的图像块是圆形的！
+    int d = u_max[v];
+    // 在坐标范围内挨个像素遍历，实际是一次遍历2个
+    //  假设每次处理的两个点坐标，中心线下方为(x,y),中心线上方为(x,-y)
+    //  对于某次待处理的两个点：m_10 = Σ x*I(x,y) =  x*I(x,y) + x*I(x,-y) =
+    //  x*(I(x,y) + I(x,-y)) 对于某次待处理的两个点：m_01 = Σ y*I(x,y) =
+    //  y*I(x,y) - y*I(x,-y) = y*(I(x,y) - I(x,-y))
+    for (int u = -d; u <= d; ++u) {
+      // 得到需要进行加运算和减运算的像素灰度值
+      // val_plus：在中心线下方x=u时的的像素灰度值
+      // val_minus：在中心线上方x=u时的像素灰度值
+      int val_plus = center[u + v * step], val_minus = center[u - v * step];
+      // 在v（y轴）上，2行所有像素灰度值之差
+      v_sum += (val_plus - val_minus);
+      m_10 += u * (val_plus + val_minus);
+    }
+    // 将这一行上的和按照y坐标加权
+    m_01 += v * v_sum;
+  }
+
+  return cv::fastAtan2((float)m_01 , (float)m_10);
+}
+
 static int bit_pattern_31_[256 * 4] = {
     8,   -3,  9,   5 /*mean (0), correlation (0)*/,
     4,   2,   7,   -12 /*mean (1.12461e-05), correlation (0.0437584)*/,
@@ -357,7 +403,15 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
  */
 static void computeOrientation(const cv::Mat &image,
                                std::vector<cv::KeyPoint> &keypoints,
-                               const std::vector<int> &umax) {}
+                               const std::vector<int> &umax) {
+  // 遍历所有的特征点
+  for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(),
+                                           keypointEnd = keypoints.end();
+       keypoint != keypointEnd; ++keypoint) {
+    // 调用IC_Angle 函数计算这个特征点的方向
+    keypoint->angle = IC_Angle(image, keypoint->pt, umax);
+  }
+}
 
 /**
  * @brief
@@ -451,6 +505,14 @@ static bool compareNodes(std::pair<int, ExtractorNode *> &e1,
   }
 }
 
+/**
+ * @brief 用仿函数（重载括号运算符）方法来计算图像特征点
+ *
+ * @param[in] _image                    输入原始图的图像
+ * @param[in] _mask                     掩膜mask
+ * @param[in & out] _keypoints                存储特征点关键点的向量
+ * @param[in & out] _descriptors              存储特征点描述子的矩阵
+ */
 int ORBextractor::operator()(cv::InputArray _image, cv::InputArray _mask,
                              std::vector<cv::KeyPoint> &_keypoints,
                              cv::OutputArray _descriptors,
