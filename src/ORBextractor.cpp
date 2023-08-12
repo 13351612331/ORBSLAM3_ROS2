@@ -543,29 +543,29 @@ static void computeOrbDescriptor(const cv::KeyPoint &kpt, const cv::Mat &img,
     int t0,  // 参与比较的一个特征点的灰度值
         t1,  // 参与比较的另一个特征点的灰度值
         val; // 描述子这个字节的比较结果
-    t0 = GET_VALUE1(0);
-    t1 = GET_VALUE1(1);
+    t0 = GET_VALUE(0);
+    t1 = GET_VALUE(1);
     val = t0 < t1; // 描述子本字节的bit0
-    t0 = GET_VALUE1(2);
-    t1 = GET_VALUE1(3);
+    t0 = GET_VALUE(2);
+    t1 = GET_VALUE(3);
     val |= (t0 < t1) << 1; // 描述子本字节的bit1
-    t0 = GET_VALUE1(4);
-    t1 = GET_VALUE1(5);
+    t0 = GET_VALUE(4);
+    t1 = GET_VALUE(5);
     val |= (t0 < t1) << 2; // 描述子本字节的bit2
-    t0 = GET_VALUE1(6);
-    t1 = GET_VALUE1(7);
+    t0 = GET_VALUE(6);
+    t1 = GET_VALUE(7);
     val |= (t0 < t1) << 3; // 描述子本字节的bit3
-    t0 = GET_VALUE1(8);
-    t1 = GET_VALUE1(9);
+    t0 = GET_VALUE(8);
+    t1 = GET_VALUE(9);
     val |= (t0 < t1) << 4; // 描述子本字节的bit4
-    t0 = GET_VALUE1(10);
-    t1 = GET_VALUE1(11);
+    t0 = GET_VALUE(10);
+    t1 = GET_VALUE(11);
     val |= (t0 < t1) << 5; // 描述子本字节的bit5
-    t0 = GET_VALUE1(12);
-    t1 = GET_VALUE1(13);
+    t0 = GET_VALUE(12);
+    t1 = GET_VALUE(13);
     val |= (t0 < t1) << 6; // 描述子本字节的bit6
-    t0 = GET_VALUE1(14);
-    t1 = GET_VALUE1(15);
+    t0 = GET_VALUE(14);
+    t1 = GET_VALUE(15);
     val |= (t0 < t1) << 7; // 描述子本字节的bit7
 
     // 保存当前比较的出来的描述子的这个字节
