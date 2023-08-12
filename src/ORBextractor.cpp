@@ -54,7 +54,7 @@ static float IC_Angle(const cv::Mat &image, cv::Point2f pt,
     m_01 += v * v_sum;
   }
 
-  return cv::fastAtan2((float)m_01 , (float)m_10);
+  return cv::fastAtan2((float)m_01, (float)m_10);
 }
 
 static int bit_pattern_31_[256 * 4] = {
@@ -505,6 +505,100 @@ static bool compareNodes(std::pair<int, ExtractorNode *> &e1,
   }
 }
 
+// 乘数因子，一度对应着多少弧度
+const float factorPI = (float)(CV_PI / 180.f);
+/**
+ * @brief
+ * 计算ORB特征点的描述子。注意这个是全局的静态函数，只能是在本文件内被调用
+ * @param[in] kpt       特征点对象
+ * @param[in] img       提取出特征点的图像
+ * @param[in] pattern   预定义好的随机采样点集
+ * @param[out] desc     用作输出变量，保存计算好的描述子，长度为32*8bit
+ */
+static void computeOrbDescriptor(const cv::KeyPoint &kpt, const cv::Mat &img,
+                                 const cv::Point *pattern, uchar *desc) {
+  // 得到特征点的角度，用弧度制表示。kpt.angle是角度制，范围为[0,360)度
+  float angle = (float)kpt.angle * factorPI;
+  // 然后计算这个角度的余弦值和正弦值
+  float a = (float)std::cos(angle), b = (float)std::sin(angle);
+
+  // 获得图像中心指针
+  const uchar *center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+  // 获得图像的每行的字节数
+  const int step = (int)img.step;
+
+  // 原始的BRIEF描述子不具有方向信息，通过加入特征点的方向来计算描述子，称之为Steer
+  // BRIEF，具有较好旋转不变特性
+  // 具体地，在计算的时候需要将这里选取的随机点点集的x轴方向旋转到特征点的方向。
+  // 获得随机“相对点集”中某个idx所对应的点的灰度,这里旋转前坐标为(x,y),
+  // 旋转后坐标(x',y')推导:
+  //  x'= xcos(θ) - ysin(θ),  y'= xsin(θ) + ycos(θ)
+#define GET_VALUE(idx)                                                         \
+  center[cvRound(pattern[idx].x * b + pattern[idx].y * a) * step +             \
+         cvRound(pattern[idx].x * a - pattern[idx].y * b)]
+
+  // brief描述子由32*8位组成
+  // 其中每一位是来自于两个像素点灰度的直接比较，所以每比较出8bit结果，需要16个随机点，这也就是为什么pattern需要+=16的原因
+  for (int i = 0; i < 32; ++i, pattern += 16) {
+    int t0,  // 参与比较的一个特征点的灰度值
+        t1,  // 参与比较的另一个特征点的灰度值
+        val; // 描述子这个字节的比较结果
+    t0 = GET_VALUE1(0);
+    t1 = GET_VALUE1(1);
+    val = t0 < t1; // 描述子本字节的bit0
+    t0 = GET_VALUE1(2);
+    t1 = GET_VALUE1(3);
+    val |= (t0 < t1) << 1; // 描述子本字节的bit1
+    t0 = GET_VALUE1(4);
+    t1 = GET_VALUE1(5);
+    val |= (t0 < t1) << 2; // 描述子本字节的bit2
+    t0 = GET_VALUE1(6);
+    t1 = GET_VALUE1(7);
+    val |= (t0 < t1) << 3; // 描述子本字节的bit3
+    t0 = GET_VALUE1(8);
+    t1 = GET_VALUE1(9);
+    val |= (t0 < t1) << 4; // 描述子本字节的bit4
+    t0 = GET_VALUE1(10);
+    t1 = GET_VALUE1(11);
+    val |= (t0 < t1) << 5; // 描述子本字节的bit5
+    t0 = GET_VALUE1(12);
+    t1 = GET_VALUE1(13);
+    val |= (t0 < t1) << 6; // 描述子本字节的bit6
+    t0 = GET_VALUE1(14);
+    t1 = GET_VALUE1(15);
+    val |= (t0 < t1) << 7; // 描述子本字节的bit7
+
+    // 保存当前比较的出来的描述子的这个字节
+    desc[i] = (uchar)val;
+  } // 通过对随机点像素灰度的比较，得出BRIEF描述子，一共是32*8=256位
+  // 为了避免和程序中的其他部分冲突在，在使用完成之后就取消这个宏定义
+#undef GET_VALUE
+}
+
+// 注意这是一个不属于任何类的全局静态函数，static修饰符限定其只能够被本文件中的函数调用
+/**
+ * @brief 计算某层金字塔图像上特征点的描述子
+ *
+ * @param[in] image                 某层金字塔图像
+ * @param[in] keypoints             特征点vector容器
+ * @param[out] descriptors          描述子
+ * @param[in] pattern               计算描述子使用的固定随机点集
+ */
+static void computeDescriptors(const cv::Mat &image,
+                               std::vector<cv::KeyPoint> &keypoints,
+                               cv::Mat &descriptors,
+                               const std::vector<cv::Point> &pattern) {
+  // 清空保存描述子信息的容器
+  descriptors = cv::Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
+  // 开始遍历特征点
+  for (size_t i = 0; i < keypoints.size(); i++)
+    // 计算这个特征点的描述子
+    computeOrbDescriptor(keypoints[i], // 要计算描述子的特征点
+                         image,        // 以及其图像
+                         &pattern[0],  // 随机点集的首地址
+                         descriptors.ptr((int)i)); // 提取出来的描述子的保存位置
+}
+
 /**
  * @brief 用仿函数（重载括号运算符）方法来计算图像特征点
  *
@@ -517,17 +611,93 @@ int ORBextractor::operator()(cv::InputArray _image, cv::InputArray _mask,
                              std::vector<cv::KeyPoint> &_keypoints,
                              cv::OutputArray _descriptors,
                              std::vector<int> &vLappingArea) {
+  // Step 1 检查图像有效性。如果图像为空，那么就直接返回
   if (_image.empty())
     return -1;
 
+  // 获取图像的大小
   cv::Mat image = _image.getMat();
+  // 判断图像的格式是否正确，要求是单通道灰度值
   assert(image.type() == CV_8UC1);
 
   // Pre-compute the scale pyramid
+  // Step 2 构建图像金字塔
   ComputePyramid(image);
 
+  // Step 3
+  // 计算图像的特征点，并且将特征点进行均匀化。均匀的特征点可以提高位姿计算精度
+  // 存储所有的特征点，注意此处为二维的vector，第一维存储的是金字塔的层数，第二维存储的是那一层金字塔图像里提取的所有特征点
   std::vector<std::vector<cv::KeyPoint>> allKeypoints;
+  // 使用四叉树的方式计算每层图像的特征点并进行分配
   ComputeKeyPointsOctTree(allKeypoints);
+
+  // Step 4 拷贝图像描述子到新的矩阵descriptors
+  cv::Mat descriptors;
+
+  // 统计整个图像金字塔中的特征点
+  int nkeypoints = 0;
+  // 开始遍历每层图像金字塔，并且累加每层的特征点个数
+  for (int level = 0; level < nlevels; ++level)
+    nkeypoints += (int)allKeypoints[level].size();
+
+  // 如果本图像金字塔中没有任何的特征点
+  if (nkeypoints == 0)
+    // 通过调用cv::mat类的.realse方法，强制清空矩阵的引用计数，这样就可以强制释放矩阵的数据了
+    // 参考[https://blog.csdn.net/giantchen547792075/article/details/9107877]
+    _descriptors.release();
+  else {
+    // 如果图像金字塔中有特征点，那么就创建这个存储描述子的矩阵，注意这个矩阵是存储整个图像金字塔中特征点的描述子的
+    _descriptors.create(nkeypoints, // 矩阵的行数，对应为特征点的总个数
+                        32, // 矩阵的列数，对应为使用32*8=256位描述子
+                        CV_8U);          // 矩阵元素的格式
+    descriptors = _descriptors.getMat(); // 获取这个描述子的矩阵信息
+  }
+
+  _keypoints = std::vector<cv::KeyPoint>(nkeypoints);
+
+  // 因为遍历是一层一层进行的，但是描述子那个矩阵是存储整个图像金字塔中特征点的描述子，所以在这里设置了Offset变量来保存“寻址”时的偏移量，
+  // 辅助进行在总描述子mat中的定位
+  int offset = 0;
+  // Modified for speeding up stereo fisheye matching
+  int monoIndex = 0, stereoIndex = nkeypoints - 1;
+  for (int level = 0; level < nlevels; ++level) {
+    // 获取在allKeypoints中当前层特征点容器的句柄
+    std::vector<cv::KeyPoint> &keypoints = allKeypoints[level];
+    // 本层的特征点数
+    int nkeypointsLevel = (int)keypoints.size();
+
+    if (nkeypointsLevel == 0)
+      continue;
+
+    // preprocess the resized image
+    //  Step 5 对图像进行高斯模糊
+    // 深拷贝当前金字塔所在层级的图像
+    cv::Mat workingMat = mvImagePyramid[level].clone();
+    // 注意：提取特征点的时候，使用的是清晰的原图像；这里计算描述子的时候，为了避免图像噪声的影响，使用了高斯模糊
+    cv::GaussianBlur(workingMat, // 源图像
+                     workingMat, // 输出图像
+                     cv::Size(7, 7), // 高斯滤波器kernel大小，必须为正的奇数
+                     2,              // 高斯滤波在x方向的标准差
+                     2,              // 高斯滤波在y方向的标准差
+                     cv::BorderTypes::BORDER_REFLECT_101); // 边缘拓展点插值类型
+
+    // Compute the descriptors
+    // desc存储当前图层的描述子
+    cv::Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
+    // Step 6 计算高斯模糊后图像的描述子
+    computeDescriptors(workingMat, // 高斯模糊之后的图层图像
+                       keypoints,  // 当前图层中的特征点集合
+                       desc,       // 存储计算之后的描述子
+                       pattern);   // 随机采样点集
+
+    // 更新偏移量的值
+    offset += nkeypoints;
+
+    // Scale keypoint coordinates
+    // Step 6 对非第0层图像中的特征点的坐标恢复到第0层图像（原图像）的坐标系下
+    // ? 得到所有层特征点在第0层里的坐标放到_keypoints里面
+    // 对于第0层的图像特征点，他们的坐标就不需要再进行恢复了
+  }
 }
 
 // 计算图像金字塔
