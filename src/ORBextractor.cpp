@@ -568,7 +568,7 @@ static void computeOrbDescriptor(const cv::KeyPoint &kpt, const cv::Mat &img,
     t1 = GET_VALUE(15);
     val |= (t0 < t1) << 7; // 描述子本字节的bit7
 
-    // 保存当前比较的出来的描述子的这个字节
+    // 保存当前比较地出来的描述子的这个字节
     desc[i] = (uchar)val;
   } // 通过对随机点像素灰度的比较，得出BRIEF描述子，一共是32*8=256位
   // 为了避免和程序中的其他部分冲突在，在使用完成之后就取消这个宏定义
@@ -697,7 +697,31 @@ int ORBextractor::operator()(cv::InputArray _image, cv::InputArray _mask,
     // Step 6 对非第0层图像中的特征点的坐标恢复到第0层图像（原图像）的坐标系下
     // ? 得到所有层特征点在第0层里的坐标放到_keypoints里面
     // 对于第0层的图像特征点，他们的坐标就不需要再进行恢复了
+    float scale = mvScaleFactor[level];
+    int i = 0;
+    for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(),
+                                             keypointEnd = keypoints.end();
+         keypoint != keypointEnd; ++keypoint) {
+      // Scale keypoint coordinates
+      if (level != 0) {
+        // 特征点本身直接乘缩放倍数就可以了
+        keypoint->pt *= scale;
+      }
+
+      if (keypoint->pt.x >= vLappingArea[0] &&
+          keypoint->pt.x <= vLappingArea[1]) {
+        _keypoints.at(stereoIndex) = (*keypoint);
+        desc.row(i).copyTo(descriptors.row(stereoIndex));
+        stereoIndex--;
+      } else {
+        _keypoints.at(monoIndex) = (*keypoint);
+        desc.row(i).copyTo(descriptors.row(monoIndex));
+        monoIndex++;
+      }
+      i++;
+    }
   }
+  return monoIndex;
 }
 
 // 计算图像金字塔

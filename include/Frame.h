@@ -36,12 +36,20 @@ public:
    */
   void ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1);
 
+private:
+  // Undistort keypoints given OpenCV distortion parameters.
+  // Only for the RGB-D case. Stereo must be already rectified!
+  // (called in the constructor).
+  // 用于对关键点进行去畸变操作，使用的是OpenCV的畸变参数。它仅适用于RGB-D情况下，并假定立体图像已经经过了矫正（rectified）处理。
+  void UndistortKeyPoints();
+
 public:
+  // 提取特征点的个数
+  int N;
   std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
   std::vector<cv::KeyPoint> mkKeysUn;
 
   cv::Mat mDescriptors, mDescriptorsRight;
-
 
   static long unsigned int nNextId;
   long unsigned mnId;
