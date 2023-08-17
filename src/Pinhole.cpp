@@ -24,4 +24,9 @@ bool Pinhole::IsEqual(ORB_SLAM3::GeometricCamera *pCam) {
   }
   return is_same_camera;
 }
+cv::Mat Pinhole::toK() {
+  cv::Mat K = (cv::Mat_<float>(3, 3) << mvParameters[0], 0.f, mvParameters[2],
+               0.f, mvParameters[1], mvParameters[3], 0.f, 0.f, 1.f);
+  return K;
+}
 } // namespace ORB_SLAM3

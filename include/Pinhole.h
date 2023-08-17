@@ -8,6 +8,7 @@
 #include "GeometricCamera.h"
 #include "TwoViewReconstruction.h"
 #include <iostream>
+#include <opencv2/opencv.hpp>
 #include <vector>
 
 namespace ORB_SLAM3 {
@@ -27,7 +28,9 @@ public:
     }
   }
 
-  bool IsEqual(GeometricCamera* pCam);
+  cv::Mat toK();
+
+  bool IsEqual(GeometricCamera *pCam);
 
 private:
   TwoViewReconstruction *tvr;

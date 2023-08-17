@@ -8,9 +8,13 @@
 #include "ImuTypes.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
+#include "Pinhole.h"
 #include <eigen3/Eigen/Dense>
+#include <opencv2/opencv.hpp>
 namespace ORB_SLAM3 {
 class ORBextractor;
+class GeometricCamera;
+class Pinhole;
 class GeometricCamera;
 class Frame {
 public:
@@ -26,6 +30,12 @@ public:
 
   // Feature extractor. The right is used only in the stereo case
   ORBextractor *mpORBextractorLeft, *mpORBextractorRight;
+
+  // Calibration matrix and OpenCV distortion parameters.
+  cv::Mat mK;
+  cv::Mat mDistCoef;
+
+  GeometricCamera *mpCamera, *mpCamera2;
 
   /**
    * @brief Extract ORB on the image. 0 for left image and 1 for right image.
@@ -47,7 +57,7 @@ public:
   // 提取特征点的个数
   int N;
   std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
-  std::vector<cv::KeyPoint> mkKeysUn;
+  std::vector<cv::KeyPoint> mvKeysUn;
 
   cv::Mat mDescriptors, mDescriptorsRight;
 
