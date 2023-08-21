@@ -5,6 +5,10 @@
 
 namespace ORB_SLAM3 {
 long unsigned int Frame::nNextId = 0;
+bool Frame::mbInitialComputations = true;
+float Frame::cx, Frame::cy, Frame::fx, Frame::fy, Frame::invfx, Frame::invfy;
+float Frame::mnMinX, Frame::mnMinY, Frame::mnMaxX, Frame::mnMaxY;
+float Frame::mfGridElementWidthInv, Frame::mfGridElementHeightInv;
 
 // 单目模式
 Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
@@ -15,7 +19,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
     : mpORBextractorLeft(extractor),
       mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
       mDistCoef(distCoef.clone()), mpCamera(pCamera), mpCamera2(nullptr),
-      mK(static_cast<Pinhole *>(pCamera)->toK()) {
+      mK(static_cast<Pinhole *>(pCamera)->toK()), mbf(bf) {
   // Frame ID
   // Step 1 帧的ID 自增
   mnId = nNextId++;
@@ -52,6 +56,48 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
 
   // Set no stereo information
   // 由于单目相机无法直接获得立体信息，所以这里要给右图像对应点和深度赋值-1表示没有相关信息
+  mvuRight = vector<float>(N, -1);
+  mvDepth = vector<float>(N, -1);
+  mnCloseMPs = 0;
+
+  // 初始化本帧的地图点
+  mvpMapPoints = vector<MapPoint *>(N, static_cast<MapPoint *>(NULL));
+
+  mmProjectPoints.clear();
+  mmMatchedInImage.clear();
+
+  mvbOutlier = vector<bool>(N, false);
+
+  // This is done only for the first Frame (or after a change in the
+  // calibration)
+  //  Step 5
+  //  计算去畸变后图像边界，将特征点分配到网格中。这个过程一般是在第一帧或者是相机标定参数发生变化之后进行
+  if (mbInitialComputations) {
+    // 计算去畸变后图像的边界
+    ComputeImageBounds(imGray);
+    // 表示一个图像像素相当于多少个图像网格列（宽）
+    mfGridElementWidthInv = static_cast<float>(FRAME_GRID_COLS) /
+                            static_cast<float>(mnMaxX - mnMinX);
+    // 表示一个图像像素相当于多少个图像网格行（高）
+    mfGridElementHeightInv = static_cast<float>(FRAME_GRID_ROWS) /
+                             static_cast<float>(mnMaxY - mnMinY);
+
+    fx = static_cast<Pinhole *>(mpCamera)->toK().at<float>(0, 0);
+    fy = static_cast<Pinhole *>(mpCamera)->toK().at<float>(1, 1);
+    cx = static_cast<Pinhole *>(mpCamera)->toK().at<float>(0, 2);
+    cy = static_cast<Pinhole *>(mpCamera)->toK().at<float>(1, 2);
+
+    invfx = 1.0 / fx;
+    invfy = 1.0 / fy;
+
+    // 特殊的初始化过程完成，标志复位
+    mbInitialComputations = false;
+  }
+
+  // 计算 basline
+  mb = mbf / fx;
+
+  // Set no stereo fisheye information
 }
 
 void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0,
@@ -110,6 +156,48 @@ void Frame::UndistortKeyPoints() {
     kp.pt.x = mat.at<float>(i, 0);
     kp.pt.y = mat.at<float>(i, 1);
     mvKeysUn[i] = kp;
+  }
+}
+
+/**
+ * @brief 计算去畸变图像的边界
+ *
+ * @param[in] imLeft            需要计算边界的图像
+ */
+void Frame::ComputeImageBounds(const cv::Mat &imLeft) {
+  // 如果畸变参数不为0，用OpenCV函数进行畸变矫正
+  if (mDistCoef.at<float>(0) != 0.0) {
+    // 保存矫正前的图像四个边界点坐标： (0,0) (cols,0) (0,rows) (cols,rows)
+    cv::Mat mat(4, 2, CV_32F);
+    mat.at<float>(0, 0) = 0.0;
+    mat.at<float>(0, 1) = 0.0;
+
+    mat.at<float>(1, 0) = imLeft.cols;
+    mat.at<float>(1, 1) = 0.0;
+
+    mat.at<float>(2, 0) = 0.0;
+    mat.at<float>(2, 1) = imLeft.rows;
+
+    mat.at<float>(3, 0) = imLeft.cols;
+    mat.at<float>(3, 1) = imLeft.rows;
+
+    // 和前面校正特征点一样的操作，将这几个边界点作为输入进行校正
+    mat = mat.reshape(2);
+    cv::undistortPoints(mat, mat, static_cast<Pinhole *>(mpCamera)->toK(),
+                        mDistCoef, cv::Mat(), mK);
+    mat = mat.reshape(1);
+
+    // Undistort corners
+    // 校正后的四个边界点已经不能够围成一个严格的矩形，因此在这个四边形的外侧加边框作为坐标的边界
+    mnMinX = min(mat.at<float>(0, 0), mat.at<float>(2, 0));
+    mnMaxX = max(mat.at<float>(1, 0), mat.at<float>(3, 0));
+    mnMinY = min(mat.at<float>(0, 1), mat.at<float>(1, 1));
+    mnMaxY = max(mat.at<float>(2, 1), mat.at<float>(3, 1));
+  } else {
+    mnMinX = 0.0f;
+    mnMaxX = imLeft.cols;
+    mnMinY = 0.0f;
+    mnMaxY = imLeft.rows;
   }
 }
 } // namespace ORB_SLAM3
