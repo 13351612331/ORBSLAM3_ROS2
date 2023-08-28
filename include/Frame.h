@@ -14,7 +14,7 @@
 #include <opencv2/opencv.hpp>
 namespace ORB_SLAM3 {
 
-#define FRAME_GRID_ROWS 48;
+#define FRAME_GRID_ROWS 48
 #define FRAME_GRID_COLS 64
 
 class ORBextractor;
@@ -32,8 +32,30 @@ public:
         Frame *pPrevF = static_cast<Frame *>(NULL),
         const IMU::Calib &ImuCalib = IMU::Calib());
 
+  // Compute the cell of a keypoint (return false if outside the grid)
+  bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
+
 public:
   GeometricCamera *mpCamera, *mpCamera2;
+
+  // Number of KeyPoints extracted in the left and right images
+  int Nleft, Nright;
+  // Number of Non Lapping Keypoints
+  int monoLeft, monoRight;
+
+  // For stereo matching
+  std::vector<int> mvLeftToRightMatch, mvRightToLeftMatch;
+
+  // Triangulated stereo observations using as reference the left camera. These
+  // are computed during ComputeStereoFishEyeMatches
+  //  用于存储通过三角化计算得到的立体视觉观测点。这些观测点是以左相机作为参考进行计算的
+  std::vector<cv::Mat> mvStereo3Dpoints;
+
+  // mTlr：表示左相机到右相机之间的平移矩阵。它描述了从左相机坐标系到右相机坐标系的平移关系。
+  // mRlr：表示左相机到右相机之间的旋转矩阵。它描述了从左相机坐标系到右相机坐标系的旋转关系。
+  // mtlr：表示左相机到右相机之间的平移向量。它是平移矩阵 mTlr 的第四列。
+  // mTrl：表示右相机到左相机之间的平移矩阵。它描述了从右相机坐标系到左相机坐标系的平移关系。
+  cv::Mat mTlr, mRlr, mtlr, mTrl;
 
   /**
    * @brief Extract ORB on the image. 0 for left image and 1 for right image.
@@ -53,6 +75,10 @@ private:
 
   // Compute image bounds for the undistorted image (called in the constructor).
   void ComputeImageBounds(const cv::Mat &imLeft);
+
+  // Assign keypoints to the grid for speed up feature matching (called in the
+  // constructor)
+  void AssignFeaturesToGrid();
 
 public:
   // Feature extractor. The right is used only in the stereo case
@@ -101,6 +127,7 @@ public:
   // 关键点被指定给网格中的单元，以降低投影MapPoints时的匹配复杂性。
   static float mfGridElementWidthInv;
   static float mfGridElementHeightInv;
+  std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
   static long unsigned int nNextId;
   long unsigned mnId;
@@ -119,9 +146,6 @@ public:
   static float mnMaxX;
   static float mnMinY;
   static float mnMaxY;
-
-  // Number of Non Lapping Keypoints
-  int monoLeft, monoRight;
 
   static bool mbInitialComputations;
 

@@ -98,6 +98,18 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
   mb = mbf / fx;
 
   // Set no stereo fisheye information
+  Nleft = -1;
+  Nright = -1;
+  mvLeftToRightMatch = vector<int>(0);
+  mvRightToLeftMatch = vector<int>(0);
+  mTlr = cv::Mat(3, 4, CV_32F);
+  mTrl = cv::Mat(3, 4, CV_32F);
+  mvStereo3Dpoints = vector<cv::Mat>(0);
+  monoLeft = -1;
+  monoRight = -1;
+
+  // 将特征点分配到图像网格中
+  AssignFeaturesToGrid();
 }
 
 void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0,
@@ -199,5 +211,73 @@ void Frame::ComputeImageBounds(const cv::Mat &imLeft) {
     mnMinY = 0.0f;
     mnMaxY = imLeft.rows;
   }
+}
+
+/**
+ * @brief 特征分网格
+ */
+void Frame::AssignFeaturesToGrid() {
+  // Fill matrix with points
+  // Step 1  给存储特征点的网格数组 Frame::mGrid 预分配空间
+  const int nCells = FRAME_GRID_COLS * FRAME_GRID_ROWS;
+
+  int nReserve = 0.5 * N / (nCells);
+
+  // 开始对mGrid这个二维数组中的每一个vector元素遍历并预分配空间
+  for (unsigned int i = 0; i < FRAME_GRID_COLS; i++)
+    for (unsigned int j = 0; j < FRAME_GRID_ROWS; j++) {
+      mGrid[i][j].reserve(nReserve);
+      if (Nleft != -1) {
+        std::cerr << "[Frame.cpp:AssignFeaturesToGrid]: 1.Not implement"
+                  << std::endl;
+      }
+    }
+
+  // Step 2
+  // 遍历每个特征点，将每个特征点在mvKeysUn中的索引值放到对应的网格mGrid中
+  for (int i = 0; i < N; i++) {
+    const cv::KeyPoint &kp = (Nleft == -1) ? mvKeysUn[i]
+                             : (i < Nleft) ? mvKeys[i]
+                                           : mvKeysRight[i - Nleft];
+
+    // 存储某个特征点所在网格的网格坐标，nGridPosX范围：[0,FRAME_GRID_COLS],
+    // nGridPosY范围：[0,FRAME_GRID_ROWS]
+    int nGridPosX, nGridPosY;
+    // 计算某个特征点所在网格的网格坐标，如果找到特征点所在的网格坐标，记录在nGridPosX,nGridPosY里，返回true，没找到返回false
+    if (PosInGrid(kp, nGridPosX, nGridPosY)) {
+      if (Nleft == -1 || i < Nleft)
+        mGrid[nGridPosX][nGridPosY].push_back(i);
+      else
+        std::cerr << "[Frame.cpp:AssignFeaturesToGrid]: 2.Not implement"
+                  << std::endl;
+    }
+  }
+}
+
+/**
+ * @brief
+ * 计算某个特征点所在网格的网格坐标，如果找到特征点所在的网格坐标，记录在nGridPosX,nGridPosY里，返回true，没找到返回false
+ *
+ * @param[in] kp                    给定的特征点
+ * @param[in & out] posX            特征点所在网格坐标的横坐标
+ * @param[in & out] posY            特征点所在网格坐标的纵坐标
+ * @return true                     如果找到特征点所在的网格坐标，返回true
+ * @return false                    没找到返回false
+ */
+bool Frame::PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY) {
+  // 计算特征点x,y坐标落在哪个网格内，网格坐标为posX，posY
+  posX = round((kp.pt.x - mnMinX) * mfGridElementWidthInv);
+  posY = round((kp.pt.y - mnMinY) * mfGridElementHeightInv);
+
+  // Keypoint's coordinates are undistorted, which could cause to go out of the
+  // image
+  //  因为特征点进行了去畸变，而且前面计算是round取整，所以有可能得到的点落在图像网格坐标外面
+  //  如果网格坐标posX，posY超出了[0,FRAME_GRID_COLS]
+  //  和[0,FRAME_GRID_ROWS]，表示该特征点没有对应网格坐标，返回false
+  if (posX < 0 || posX >= FRAME_GRID_COLS || posY < 0 ||
+      posY >= FRAME_GRID_ROWS)
+    return false;
+
+  return true;
 }
 } // namespace ORB_SLAM3
