@@ -25,6 +25,7 @@ class MapPoint;
 class Frame {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Frame();
   // Constructor for Monocular cameras.
   Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor,
         ORBVocabulary *voc, GeometricCamera *pCamera, cv::Mat &distCoef,
@@ -80,6 +81,8 @@ private:
   // constructor)
   void AssignFeaturesToGrid();
 
+  std::mutex *mpMutexImu;
+
 public:
   // Feature extractor. The right is used only in the stereo case
   ORBextractor *mpORBextractorLeft, *mpORBextractorRight;
@@ -114,6 +117,9 @@ public:
 
   // ORB descriptor , each row associated to a keypoint.
   cv::Mat mDescriptors, mDescriptorsRight;
+
+  // IMU linear velocity
+  cv::Mat mVw;
 
   // MapPoints associated to keypoints , NULL pointer if no association.
   // Flag to identify outlier associations.

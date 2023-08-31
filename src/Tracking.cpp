@@ -9,7 +9,8 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
                    KeyFrameDatabase *pKFDB, const std::string &strSettingPath,
                    const ORB_SLAM3::eSensor sensor, Setting *settings,
                    const std::string &_nameSeq)
-    : mpAtlas(pAtlas), mSensor(sensor), mbOnlyTracking(false),mState(eTrackingState::NO_IMAGE_YET) {
+    : mpAtlas(pAtlas), mSensor(sensor), mbOnlyTracking(false),
+      mState(eTrackingState::NO_IMAGE_YET), mpORBVocabulary(pVoc) {
   // Load camera parameters from settings file
   if (settings) {
     newParameterLoader(settings);
@@ -138,10 +139,23 @@ void Tracking::ResetActiveMap(bool bLocMap) {
             << std::endl;
 }
 
+/**
+ * @brief 输入左目RGB或RGBA图像，输出世界坐标系到该帧相机坐标系的变换矩阵
+ *
+ * @param im 图像
+ * @param timestamp 时间戳
+ * @param filename 文件名字，貌似调试用的
+ *
+ * Step 1 ：将彩色图像转为灰度图像
+ * Step 2 ：构造Frame
+ * Step 3 ：跟踪
+ */
 Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im,
                                           const double &timestamp,
                                           std::string filename) {
   mImGray = im;
+  // Step 1 ：将彩色图像转为灰度图像
+  // 若图片是3、4通道的彩色图，还需要转化成单通道灰度图
   if (mImGray.channels() == 3) {
     if (mbRGB)
       cvtColor(mImGray, mImGray, cv::COLOR_RGB2GRAY);
@@ -154,8 +168,21 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im,
       cvtColor(mImGray, mImGray, cv::COLOR_BGRA2GRAY);
   }
 
-  if(mSensor == eSensor::MONOCULAR){
-    if(mState == eTrackingState::NOT_INITIALIZED || mState == eTrackingState::NO_IMAGE_YET || (lastID - initID) < mMaxFrames){}
+  // Step 2 ：构造Frame类
+  if (mSensor == eSensor::MONOCULAR) {
+    if (mState == eTrackingState::NOT_INITIALIZED ||
+        mState == eTrackingState::NO_IMAGE_YET ||
+        (lastID - initID) < mMaxFrames)
+      mCurrentFrame =
+          Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
+                mpCamera, mDistCoef, mbf, mThDepth);
+    else
+      mCurrentFrame =
+          Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary,
+                mpCamera, mDistCoef, mbf, mThDepth);
+  } else if (mSensor == eSensor::IMU_MONOCULAR) {
+    std::cerr << "[Tracking.cpp:GrabImageMonocular]: No IMU_MONOCULAR"
+              << std::endl;
   }
 }
 } // namespace ORB_SLAM3

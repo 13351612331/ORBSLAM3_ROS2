@@ -10,6 +10,8 @@ float Frame::cx, Frame::cy, Frame::fx, Frame::fy, Frame::invfx, Frame::invfy;
 float Frame::mnMinX, Frame::mnMinY, Frame::mnMaxX, Frame::mnMaxY;
 float Frame::mfGridElementWidthInv, Frame::mfGridElementHeightInv;
 
+Frame::Frame() {}
+
 // 单目模式
 Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
              ORB_SLAM3::ORBextractor *extractor, ORB_SLAM3::ORBVocabulary *voc,
@@ -110,6 +112,15 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp,
 
   // 将特征点分配到图像网格中
   AssignFeaturesToGrid();
+
+  if (pPrevF) {
+    if (!pPrevF->mVw.empty())
+      mVw = pPrevF->mVw.clone();
+  } else {
+    mVw = cv::Mat::zeros(3, 1, CV_32F);
+  }
+
+  mpMutexImu = new std::mutex();
 }
 
 void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0,
